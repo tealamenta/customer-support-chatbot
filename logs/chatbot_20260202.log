@@ -1,0 +1,3 @@
+[2026-02-02 15:55:22,499] INFO [chatbot] - Loading base model: TinyLlama/TinyLlama-1.1B-Chat-v1.0
+[2026-02-02 15:55:22,499] INFO [chatbot] - Loading adapter: test/path
+[2026-02-02 15:55:22,499] INFO [chatbot] - Model loaded in 0.00s

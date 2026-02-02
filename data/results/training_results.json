@@ -1,0 +1,13 @@
+{
+  "model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+  "lora_r": 16,
+  "lora_alpha": 32,
+  "train_samples": 2000,
+  "val_samples": 500,
+  "epochs": 1,
+  "batch_size": 16,
+  "learning_rate": 0.0002,
+  "trainable_params": 4505600,
+  "trainable_percent": 0.40791125334440875,
+  "device": "mps"
+}

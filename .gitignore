@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv/
+env/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Model checkpoints (large files)
+models/customer-support-model/checkpoint-*/optimizer.pt
+models/customer-support-model/checkpoint-*/rng_state.pth
+models/customer-support-model/checkpoint-*/scaler.pt
+models/customer-support-model/checkpoint-*/scheduler.pt
+data/models/checkpoints/*/optimizer.pt
+data/models/checkpoints/*/rng_state.pth
+
+# Keep model weights
+!models/customer-support-model/adapter_model.safetensors
