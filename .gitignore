@@ -41,3 +41,20 @@ data/models/checkpoints/*/rng_state.pth
 
 # Keep model weights
 !models/customer-support-model/adapter_model.safetensors
+
+# MLflow
+mlflow.db
+mlruns/
+
+# Logs
+logs/
+
+# Checkpoints
+models/*/checkpoint-*/
+*.pt
+*.pth
+
+# Cache
+.cache/
+__pycache__/
+*.pyc
