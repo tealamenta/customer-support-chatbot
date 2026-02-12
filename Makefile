@@ -1,4 +1,4 @@
-.PHONY: install test lint run-demo run-api docker-build docker-run clean
+.PHONY: install test lint run-demo run-api docker-build docker-run clean mlflow
 
 install:
 	pip install -e .
@@ -24,7 +24,10 @@ docker-build:
 docker-run:
 	docker-compose up
 
+mlflow:
+	mlflow ui --host 0.0.0.0 --port 5000
+
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
-	rm -rf .pytest_cache .coverage coverage.xml
+	rm -rf .pytest_cache .coverage coverage.xml mlruns/

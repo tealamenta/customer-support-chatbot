@@ -1,0 +1,6 @@
+artifact_location: mlflow-artifacts:/130467928076566210
+creation_time: 1770804084373
+experiment_id: '130467928076566210'
+last_update_time: 1770804084373
+lifecycle_stage: active
+name: customer-support-finetune

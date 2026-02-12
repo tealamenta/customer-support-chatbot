@@ -1,12 +1,15 @@
 # Customer Support Chatbot
 
-Fine-tuned LLM for customer support automation using LoRA.
+Fine-tuned LLM for customer support automation using LoRA with full MLOps pipeline.
 
 ![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
 ![Model](https://img.shields.io/badge/Model-TinyLlama--1.1B-green.svg)
 ![Loss](https://img.shields.io/badge/Loss-0.538-brightgreen.svg)
 ![Tests](https://img.shields.io/badge/Tests-44%20passed-green.svg)
 ![Coverage](https://img.shields.io/badge/Coverage-94%25-green.svg)
+![MLflow](https://img.shields.io/badge/MLflow-Tracking-orange.svg)
+![Airflow](https://img.shields.io/badge/Airflow-Orchestration-red.svg)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-Deployment-blue.svg)
 
 ---
 
@@ -15,13 +18,14 @@ Fine-tuned LLM for customer support automation using LoRA.
 1. [Results](#results)
 2. [Sample Outputs](#sample-outputs)
 3. [Architecture](#architecture)
-4. [Installation](#installation)
-5. [Usage](#usage)
-6. [API](#api)
-7. [Training](#training)
-8. [MLOps](#mlops)
-9. [Project Structure](#project-structure)
-10. [Testing](#testing)
+4. [MLOps Stack](#mlops-stack)
+5. [Installation](#installation)
+6. [Usage](#usage)
+7. [API](#api)
+8. [Training](#training)
+9. [MLOps Commands](#mlops-commands)
+10. [Project Structure](#project-structure)
+11. [Testing](#testing)
 
 ---
 
@@ -76,7 +80,7 @@ Fine-tuned LLM for customer support automation using LoRA.
 │                    FastAPI + Monitoring                     │
 ├─────────────────────────────────────────────────────────────┤
 │   /chat          /health          /metrics                  │
-└──────────┬──────────────────────────────┬───────────────────┘
+└──────────┬──────────────────────────────────┬───────────────┘
            │                              │
            ▼                              ▼
 ┌─────────────────────┐      ┌─────────────────────────┐
@@ -85,11 +89,36 @@ Fine-tuned LLM for customer support automation using LoRA.
 │   - LoRA Adapter    │      │   - Requests            │
 │   - Generation      │      │   - Error Rate          │
 └─────────────────────┘      └─────────────────────────┘
-           │
-           ▼
+```
+
+---
+
+## MLOps Stack
+
+| Component | Technology | Port |
+|-----------|------------|------|
+| Experiment Tracking | MLflow | 5001 |
+| Data Versioning | DVC | - |
+| Orchestration | Airflow | 8081 |
+| Containerization | Docker | 8000 |
+| Deployment | Kubernetes | - |
+| CI/CD | GitHub Actions | - |
+| Monitoring | Prometheus + Grafana | 9090/3000 |
+```
 ┌─────────────────────────────────────────────────────────────┐
-│                      Logging System                         │
-│              Console + File (logs/*.log)                    │
+│                    MLOps Pipeline                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   Data          Training         Deployment     Monitoring  │
+│   ┌───┐         ┌───┐           ┌───┐          ┌───┐       │
+│   │DVC│ ──────► │MLflow│ ──────►│K8s│ ────────►│Prometheus│ │
+│   └───┘         └───┘           └───┘          └───┘       │
+│                   │                              │          │
+│                   ▼                              ▼          │
+│               ┌───────┐                     ┌───────┐       │
+│               │Airflow│                     │Grafana│       │
+│               └───────┘                     └───────┘       │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -100,18 +129,19 @@ Fine-tuned LLM for customer support automation using LoRA.
 ### Prerequisites
 
 - Python 3.11+
+- Docker
 - 8GB RAM minimum
 
 ### Setup
 ```bash
-git clone https://github.com/yourusername/customer-support-chatbot.git
+git clone https://github.com/tealamenta/customer-support-chatbot.git
 cd customer-support-chatbot
 
 # Install dependencies
-pip install -e .
+pip install -e ".[dev]"
 
-# Or with requirements
-pip install -r requirements.txt
+# Pull data (DVC)
+dvc pull
 ```
 
 ### Using Makefile
@@ -119,6 +149,8 @@ pip install -r requirements.txt
 make install   # Install package
 make test      # Run tests
 make lint      # Run linter
+make run-api   # Start API
+make mlflow    # Start MLflow UI
 ```
 
 ---
@@ -129,18 +161,6 @@ make lint      # Run linter
 ```bash
 python run.py demo
 ```
-```
-============================================================
-CUSTOMER SUPPORT CHATBOT - DEMO
-============================================================
-Type 'quit' to exit
-
-You: I want to cancel my order
-Assistant: I've come to understand that you need assistance...
-
-You: quit
-Bye!
-```
 
 ### Evaluation
 ```bash
@@ -150,9 +170,8 @@ python run.py eval
 ### API Server
 ```bash
 python run.py api
+# http://localhost:8000
 ```
-
-Server runs at http://localhost:8000
 
 ---
 
@@ -196,15 +215,6 @@ Server runs at http://localhost:8000
 }
 ```
 
-### Docker
-```bash
-# Build
-docker build -t customer-support-chatbot .
-
-# Run
-docker-compose up
-```
-
 ---
 
 ## Training
@@ -230,18 +240,6 @@ docker-compose up
 | target_modules | q_proj, k_proj, v_proj, o_proj |
 | Trainable params | 4.2M (0.38%) |
 
-### Training Configuration
-
-| Parameter | Value |
-|-----------|-------|
-| Epochs | 1 |
-| Batch Size | 16 (4 x 4 grad accum) |
-| Learning Rate | 2e-4 |
-| Scheduler | Cosine |
-| Warmup | 3% |
-| Precision | FP16 |
-| Hardware | Google Colab T4 |
-
 ### Run Training (Colab)
 
 1. Upload `notebooks/03_colab_fine_tuning.ipynb` to Google Colab
@@ -250,31 +248,53 @@ docker-compose up
 
 ---
 
-## MLOps
+## MLOps Commands
 
-### Monitoring
+### MLflow (Experiment Tracking)
+```bash
+docker run -d -p 5001:5000 --name mlflow ghcr.io/mlflow/mlflow:v2.11.0 mlflow server --host 0.0.0.0
+# http://localhost:5001
+```
 
-| Feature | Description |
-|---------|-------------|
-| **Logging** | File + console logs in `logs/` |
-| **Metrics** | Latency, requests, errors tracked |
-| **Health Check** | `/health` endpoint with stats |
-| **Metrics API** | `/metrics` for dashboards |
+### DVC (Data Versioning)
+```bash
+dvc pull                    # Pull data
+dvc repro                   # Reproduce pipeline
+dvc push                    # Push to remote
+```
 
-### CI/CD
+### Airflow (Orchestration)
+```bash
+cd docker
+docker-compose -f docker-compose.airflow.yml up -d
+# http://localhost:8081 (admin/admin)
+```
 
-GitHub Actions workflow (`.github/workflows/ci.yml`):
-- Runs tests on push/PR
-- Coverage report
-- Linting with Ruff
+### Docker
+```bash
+# Standard build
+docker build -t customer-support-chatbot .
+docker run -p 8000:8000 customer-support-chatbot
 
-### Model Card
+# K8s build (with pre-loaded model)
+docker build -f Dockerfile.k8s -t customer-support-chatbot:k8s .
+```
 
-See `models/MODEL_CARD.md` for:
-- Model details
-- Training data
-- Intended use
-- Limitations
+### Kubernetes
+```bash
+minikube start
+minikube image load customer-support-chatbot:k8s
+kubectl apply -f k8s/deployment.yaml
+minikube service chatbot-service --url
+```
+
+### Monitoring (Prometheus + Grafana)
+```bash
+cd monitoring
+docker-compose up -d
+# Prometheus: http://localhost:9090
+# Grafana: http://localhost:3000 (admin/admin)
+```
 
 ---
 
@@ -282,36 +302,50 @@ See `models/MODEL_CARD.md` for:
 ```
 customer-support-chatbot/
 ├── .github/workflows/
-│   └── ci.yml                    # CI/CD pipeline
+│   └── ci-cd.yml                 # CI/CD pipeline
+├── dags/
+│   └── ml_pipeline.py            # Airflow DAG
 ├── data/
-│   └── processed/                # Training data
+│   ├── processed/                # Training data (DVC tracked)
+│   ├── models/                   # Model files (DVC tracked)
+│   ├── processed.dvc
+│   └── models.dvc
+├── docker/
+│   └── docker-compose.airflow.yml
+├── k8s/
+│   └── deployment.yaml           # Kubernetes manifests
 ├── logs/                         # Application logs
-├── metrics/                      # Metrics JSON files
+├── mlruns/                       # MLflow experiments
 ├── models/
 │   ├── customer-support-model/   # Fine-tuned adapter
-│   └── MODEL_CARD.md            # Model documentation
+│   └── MODEL_CARD.md
+├── monitoring/
+│   ├── docker-compose.yml        # Prometheus + Grafana
+│   └── prometheus.yml
 ├── notebooks/
 │   ├── 01_data_exploration.ipynb
-│   ├── 02_fine_tuning.ipynb      # Local (Mac)
-│   └── 03_colab_fine_tuning.ipynb # Colab (recommended)
+│   ├── 02_fine_tuning.ipynb
+│   └── 03_colab_fine_tuning.ipynb
 ├── src/
 │   ├── api/
-│   │   └── app.py               # FastAPI endpoints
+│   │   └── app.py                # FastAPI endpoints
 │   ├── config/
-│   │   ├── settings.py          # Configuration
-│   │   └── logging_config.py    # Logging setup
+│   │   ├── settings.py
+│   │   └── logging_config.py
 │   ├── evaluation/
-│   │   ├── metrics.py           # Evaluation metrics
-│   │   └── tracking.py          # Metrics tracking
-│   └── model/
-│       └── inference.py         # Model inference
-├── tests/                       # 44 tests, 94% coverage
+│   │   ├── metrics.py
+│   │   └── tracking.py
+│   ├── model/
+│   │   └── inference.py
+│   └── training/
+│       └── train.py              # Training with MLflow
+├── tests/                        # 44 tests, 94% coverage
 ├── Dockerfile
-├── docker-compose.yml
+├── Dockerfile.k8s                # K8s image with pre-loaded model
 ├── Makefile
 ├── pyproject.toml
-├── requirements.txt
-├── run.py                       # CLI entry point
+├── dvc.yaml
+├── run.py
 └── README.md
 ```
 
@@ -351,9 +385,10 @@ pytest tests/ -v --cov=src --cov-report=term-missing
 | Framework | HuggingFace Transformers |
 | Training | TRL SFTTrainer |
 | API | FastAPI |
-| Monitoring | Custom metrics + logging |
+| MLOps | MLflow, DVC, Airflow |
+| Containers | Docker, Kubernetes |
+| Monitoring | Prometheus, Grafana |
 | CI/CD | GitHub Actions |
-| Container | Docker |
 
 ---
 
@@ -363,6 +398,9 @@ pytest tests/ -v --cov=src --cov-report=term-missing
 - [Bitext Dataset](https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset)
 - [PEFT LoRA](https://huggingface.co/docs/peft)
 - [TRL](https://huggingface.co/docs/trl)
+- [MLflow](https://mlflow.org/)
+- [DVC](https://dvc.org/)
+- [Airflow](https://airflow.apache.org/)
 
 ---
 
@@ -374,4 +412,5 @@ MIT License
 
 ## Author
 
-tealamenta. - AI/ML Engineer
+tealamenta - AI/ML Engineer
+- GitHub: [@tealamenta](https://github.com/tealamenta)
