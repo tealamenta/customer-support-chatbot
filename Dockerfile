@@ -14,7 +14,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY src/ ./src/
 COPY models/ ./models/
-COPY data/models/ ./data/models/
 
 ENV PYTHONUNBUFFERED=1
 ENV PORT=8000
